@@ -1,0 +1,41 @@
+.button {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 0;
+  font-size: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 100ms ease-in-out, color 100ms ease-in-out, transform 100ms ease-in-out;
+}
+
+.button.full {
+  width: 100%;
+}
+
+.button, .button:focus, .button:active, .button:visited {
+  text-decoration: none;
+}
+
+.button:active {
+  transform: scale(1.05);
+}
+
+.button.button-secondary {
+  background-color: hsl(240 3.7% 15.9%);
+  color: hsl(0 0% 98%);
+}
+
+.button.button-secondary:hover {
+  background-color: hsl(240 3.7% 15.9%/.8);
+  color: hsl(0 0% 98%);
+}
+
+.button.button-primary {
+  background-color: hsl(0 0% 98%);
+  color: hsl(240 5.9% 10%);
+}
+
+.button.button-primary:hover {
+  background-color: hsl(0 0% 98%/.9);
+  color: hsl(240 5.9% 10%);
+}

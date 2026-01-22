@@ -1,0 +1,88 @@
+{
+  "name": "@p-stream/extension",
+  "displayName": "P-Stream extension",
+  "version": "1.3.7",
+  "description": "Enhance your streaming experience with just one click",
+  "author": "P-Stream",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "build:firefox": "plasmo build --target=firefox-mv3",
+    "package": "plasmo package",
+    "package:firefox": "npm run build:firefox && plasmo package --target=firefox-mv3 && mv build/firefox-mv3-prod.zip build/firefox-mv3-prod.xpi",
+    "lint": "eslint --ext .tsx,.ts src",
+    "lint:fix": "eslint --fix --ext .tsx,.ts src",
+    "lint:report": "eslint --ext .tsx,.ts --output-file eslint_report.json --format json src",
+    "preinstall": "npx -y only-allow pnpm"
+  },
+  "dependencies": {
+    "@plasmohq/messaging": "^0.7.2",
+    "@plasmohq/storage": "^1.15.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.1.27",
+    "@types/firefox-webext-browser": "^120.0.5",
+    "@types/node": "24.10.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^3.10.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "plasmo": "0.90.5",
+    "prettier": "3.6.2",
+    "typescript": "5.9.3"
+  },
+  "manifest": {
+    "permissions": [
+      "declarativeNetRequest",
+      "activeTab",
+      "cookies"
+    ],
+    "optional_host_permissions": [
+      "<all_urls>"
+    ],
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "{e613be14-63c3-4bd9-8a4a-502c12bcf201}",
+        "data_collection_permissions": {
+          "required": [
+            "browsingActivity",
+            "authenticationInfo",
+            "websiteContent"
+          ]
+        }
+      },
+      "gecko_android": {
+        "id": "{e613be14-63c3-4bd9-8a4a-502c12bcf201}",
+        "data_collection_permissions": {
+          "required": [
+            "browsingActivity",
+            "authenticationInfo",
+            "websiteContent"
+          ]
+        }
+      }
+    },
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "assets/active.png",
+          "assets/inactive.png"
+        ],
+        "matches": [
+          "<all_urls>"
+        ]
+      }
+    ]
+  }
+}
