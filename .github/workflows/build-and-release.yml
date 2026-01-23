@@ -145,6 +145,8 @@ jobs:
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' || github.event.inputs.draft_release == 'true'
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
