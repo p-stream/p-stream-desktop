@@ -9,6 +9,7 @@ Desktop app for P-Stream (movie-web) that provides enhanced streaming capabiliti
 - Automatic update checking from GitHub releases
 - Discord Rich Presence integration
 - Cross-platform support (macOS, Windows, Linux)
+- Configurable settings menu (`ctrl/cmd + ,`)
 
 ## Installation
 

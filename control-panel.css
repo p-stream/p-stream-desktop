@@ -1,0 +1,150 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #1f2025;
+  color: #e4e4e7;
+  overflow: hidden;
+}
+
+.control-panel {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #1f2025;
+}
+
+.control-panel__header {
+  padding: 24px;
+  border-bottom: 1px solid #2d2d33;
+  background: #25262b;
+}
+
+.control-panel__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.control-panel__content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.control-panel__section {
+  margin-bottom: 32px;
+}
+
+.control-panel__setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #25262b;
+  border-radius: 8px;
+  border: 1px solid #2d2d33;
+  transition: border-color 0.2s;
+}
+
+.control-panel__setting:hover {
+  border-color: #3d3d44;
+}
+
+.control-panel__setting-info {
+  flex: 1;
+  margin-right: 16px;
+}
+
+.control-panel__setting-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #e4e4e7;
+  margin-bottom: 4px;
+}
+
+.control-panel__setting-description {
+  font-size: 13px;
+  color: #a1a1aa;
+  line-height: 1.4;
+}
+
+/* Toggle Switch Styles */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle__input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle__slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #3d3d44;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle__slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #e4e4e7;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle__input:checked + .toggle__slider {
+  background-color: #5865f2;
+}
+
+.toggle__input:checked + .toggle__slider:before {
+  transform: translateX(20px);
+}
+
+.toggle__input:focus + .toggle__slider {
+  outline: 2px solid #5865f2;
+  outline-offset: 2px;
+}
+
+.toggle__input:disabled + .toggle__slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Scrollbar Styles */
+.control-panel__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.control-panel__content::-webkit-scrollbar-track {
+  background: #1f2025;
+}
+
+.control-panel__content::-webkit-scrollbar-thumb {
+  background: #3d3d44;
+  border-radius: 4px;
+}
+
+.control-panel__content::-webkit-scrollbar-thumb:hover {
+  background: #4d4d54;
+}

@@ -1,8 +1,9 @@
-const { app, BrowserWindow, BrowserView, session, ipcMain, dialog, Notification } = require('electron');
+const { app, BrowserWindow, BrowserView, session, ipcMain, dialog, Notification, globalShortcut } = require('electron');
 const path = require('path');
 const { handlers, setupInterceptors } = require('./ipc-handlers');
 const DiscordRPC = require('discord-rpc');
 const { autoUpdater } = require('electron-updater');
+const SimpleStore = require('./storage');
 
 const clientId = '1451640447993774232';
 DiscordRPC.register(clientId);
@@ -10,8 +11,24 @@ DiscordRPC.register(clientId);
 const rpc = new DiscordRPC.Client({ transport: 'ipc' });
 const startTimestamp = new Date();
 
+// Settings store (will be initialized when app is ready)
+let store = null;
+
+// Control panel window reference
+let controlPanelWindow = null;
+
+// Store current activity title
+let currentActivityTitle = null;
+
 async function setActivity(title) {
   if (!rpc) return;
+  
+  // Check if Discord RPC is enabled (store might not be initialized yet)
+  if (store && !store.get('discordRPCEnabled', true)) {
+    // Clear activity if disabled
+    rpc.clearActivity().catch(console.error);
+    return;
+  }
 
   let details = 'Not watching anything';
   let state = 'P-Stream is goated af';
@@ -110,10 +127,12 @@ function createWindow() {
 
     if (title === 'P-Stream') {
       mainWindow.setTitle('P-Stream');
+      currentActivityTitle = null;
       setActivity(null);
     } else {
       const cleanTitle = title.replace(' - P-Stream', '');
       mainWindow.setTitle(`${cleanTitle} - P-Stream`);
+      currentActivityTitle = cleanTitle;
       setActivity(cleanTitle);
     }
 
@@ -128,6 +147,41 @@ function createWindow() {
 
   // Optional: Open DevTools
   // view.webContents.openDevTools();
+}
+
+function createControlPanelWindow() {
+  // If window already exists, focus it
+  if (controlPanelWindow) {
+    controlPanelWindow.focus();
+    return;
+  }
+
+  controlPanelWindow = new BrowserWindow({
+    width: 500,
+    height: 400,
+    minWidth: 400,
+    minHeight: 300,
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, 'logo.png'),
+    backgroundColor: '#1f2025',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload-control-panel.js')
+    },
+    title: 'P-Stream Control Panel',
+    show: false
+  });
+
+  controlPanelWindow.loadFile(path.join(__dirname, 'control-panel.html'));
+
+  controlPanelWindow.once('ready-to-show', () => {
+    controlPanelWindow.show();
+  });
+
+  controlPanelWindow.on('closed', () => {
+    controlPanelWindow = null;
+  });
 }
 
 // Auto-updater configuration
@@ -223,12 +277,22 @@ autoUpdater.on('update-downloaded', (info) => {
 
 rpc.on('ready', () => {
   console.log('Discord RPC started');
-  setActivity(null);
+  // Only set activity if RPC is enabled (store might not be initialized yet)
+  if (!store || store.get('discordRPCEnabled', true)) {
+    setActivity(currentActivityTitle);
+  }
 });
 
 app.whenReady().then(async () => {
   // Set the app name
   app.setName('P-Stream');
+
+  // Initialize settings store (after app is ready so app.getPath works)
+  store = new SimpleStore({
+    defaults: {
+      discordRPCEnabled: true
+    }
+  });
 
   // Register IPC handlers
   Object.entries(handlers).forEach(([channel, handler]) => {
@@ -269,6 +333,17 @@ app.whenReady().then(async () => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+
+  // Register global keyboard shortcut (Cmd/Ctrl + ,)
+  const shortcut = process.platform === 'darwin' ? 'Command+,' : 'Control+,';
+  globalShortcut.register(shortcut, () => {
+    createControlPanelWindow();
+  });
+});
+
+// Unregister all shortcuts when app quits
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 ipcMain.on('window-minimize', (event) => {
@@ -291,6 +366,31 @@ ipcMain.on('window-close', (event) => {
 ipcMain.on('theme-color', (event, color) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win) win.webContents.send('theme-color', color);
+});
+
+// IPC handlers for Discord RPC toggle
+ipcMain.handle('get-discord-rpc-enabled', () => {
+  if (!store) return true; // Default to enabled if store not initialized
+  return store.get('discordRPCEnabled', true);
+});
+
+ipcMain.handle('set-discord-rpc-enabled', async (event, enabled) => {
+  if (!store) return false;
+  
+  store.set('discordRPCEnabled', enabled);
+  
+  // Update activity immediately
+  if (enabled) {
+    // Use stored current activity title
+    await setActivity(currentActivityTitle);
+  } else {
+    // Clear activity if disabled
+    if (rpc) {
+      rpc.clearActivity().catch(console.error);
+    }
+  }
+  
+  return true;
 });
 
 app.on('window-all-closed', function () {

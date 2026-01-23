@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P-Stream Control Panel</title>
+    <link rel="stylesheet" href="control-panel.css" />
+  </head>
+  <body>
+    <div class="control-panel">
+      <div class="control-panel__header">
+        <h1 class="control-panel__title">P-Stream Control Panel</h1>
+      </div>
+      <div class="control-panel__content">
+        <div class="control-panel__section">
+          <div class="control-panel__setting">
+            <div class="control-panel__setting-info">
+              <h3 class="control-panel__setting-title">Discord Rich Presence</h3>
+              <p class="control-panel__setting-description">
+                Show what you're watching on Discord
+              </p>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="discord-rpc-toggle" class="toggle__input" />
+              <span class="toggle__slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="control-panel.js"></script>
+  </body>
+</html>
