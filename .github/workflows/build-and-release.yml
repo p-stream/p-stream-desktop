@@ -72,30 +72,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Ensure latest npm and install pnpm
-        shell: pwsh
-        run: |
-          npm install -g npm
-          npm install -g pnpm
-          $npmPath = npm bin -g
-          echo "$npmPath" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
-
-      - name: Verify pnpm installation
-        run: pnpm --version
+          cache: 'pnpm'
 
       - name: Install dependencies
-        shell: pwsh
         run: |
           pnpm config set fund false
-          if (Test-Path pnpm-lock.yaml) {
-            Remove-Item pnpm-lock.yaml
-          }
-          pnpm install
+          pnpm install --frozen-lockfile
 
       - name: Build Windows ${{ matrix.arch }}
         run: |
