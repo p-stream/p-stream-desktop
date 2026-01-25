@@ -58,7 +58,7 @@ window.controlPanel.onUpdateDownloaded((data) => {
 // Handle update check/install button
 checkUpdatesBtn.addEventListener('click', async () => {
   const buttonText = checkUpdatesBtn.textContent;
-  
+
   // Handle different button states
   if (buttonText === 'Install') {
     await handleInstallUpdate();
@@ -211,7 +211,7 @@ async function handleRestartAndInstall() {
 // Handle save URL button
 saveUrlBtn.addEventListener('click', async () => {
   const url = streamUrlInput.value.trim();
-  
+
   if (!url) {
     alert('Please enter a valid URL');
     return;
@@ -224,24 +224,24 @@ saveUrlBtn.addEventListener('click', async () => {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       formattedUrl = `https://${url}`;
     }
-    
+
     // Validate URL format
     new URL(formattedUrl);
-    
+
     // Extract just the domain if full URL was provided, or use as-is if it's just a domain
     let urlToSave = url;
     if (url.startsWith('http://') || url.startsWith('https://')) {
       const urlObj = new URL(url);
       urlToSave = urlObj.hostname;
     }
-    
+
     saveUrlBtn.disabled = true;
     saveUrlBtn.textContent = 'Saving...';
-    
+
     try {
       await window.controlPanel.setStreamUrl(urlToSave);
       saveUrlBtn.textContent = 'Saved!';
-      
+
       // Reset button text after a short delay
       setTimeout(() => {
         saveUrlBtn.textContent = 'Save';
