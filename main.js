@@ -391,6 +391,8 @@ if (app.isPackaged) {
 
 // Track if we're doing a manual check to avoid duplicate dialogs
 let isManualCheck = false;
+// Track if we're checking on startup (to handle pending updates)
+let isStartupCheck = false;
 
 // Simple version comparison function (handles semantic versioning)
 function compareVersions(current, latest) {
@@ -504,6 +506,39 @@ autoUpdater.on('update-downloaded', (info) => {
     });
   }
 
+  // On startup, if there's a pending update, prompt to install it immediately
+  if (isStartupCheck) {
+    console.log('Pending update found on startup:', info.version);
+    isStartupCheck = false;
+    // Wait a bit for the window to be ready, then show the dialog
+    setTimeout(() => {
+      dialog
+        .showMessageBox(BrowserWindow.getFocusedWindow() || null, {
+          type: 'info',
+          title: 'Update Ready to Install',
+          message: `P-Stream ${info.version} has been downloaded and is ready to install!`,
+          detail: 'Would you like to install it now? The application will restart.',
+          buttons: ['Install Now', 'Later'],
+          defaultId: 0,
+          cancelId: 1,
+        })
+        .then((result) => {
+          if (result.response === 0) {
+            // Install Now button - install and restart
+            console.log('User chose to install update on startup');
+            autoUpdater.quitAndInstall(false, true);
+          } else {
+            // User chose Later - update will be available in control panel
+            console.log('User chose to install update later');
+          }
+        })
+        .catch((error) => {
+          console.error('Error showing update dialog on startup:', error);
+        });
+    }, 2000);
+    return;
+  }
+
   // Only show dialog for automatic checks (not manual checks from control panel)
   if (!isManualCheck) {
     dialog
@@ -519,7 +554,7 @@ autoUpdater.on('update-downloaded', (info) => {
       .then((result) => {
         if (result.response === 0) {
           // Restart Now button
-          autoUpdater.quitAndInstall();
+          autoUpdater.quitAndInstall(false, true);
         }
       })
       .catch(console.error);
@@ -558,8 +593,22 @@ app.whenReady().then(async () => {
     console.log('Running in development mode, skipping update check');
   } else {
     // Check for updates after a short delay to let the app fully load
+    // This will also detect if there's a pending update already downloaded
     setTimeout(() => {
-      autoUpdater.checkForUpdates();
+      isStartupCheck = true;
+      console.log('Checking for updates on startup (will detect pending updates)...');
+      autoUpdater.checkForUpdates().catch((error) => {
+        console.error('Error checking for updates on startup:', error);
+        isStartupCheck = false;
+      });
+      // Reset startup check flag after a reasonable timeout (10 seconds)
+      // If update-downloaded event fires, it will be handled above
+      setTimeout(() => {
+        if (isStartupCheck) {
+          console.log('Startup check completed, no pending update found');
+          isStartupCheck = false;
+        }
+      }, 10000);
     }, 3000);
   }
 
@@ -745,7 +794,18 @@ app.whenReady().then(async () => {
       // 3. Restart the app after installation (since isForceRunAfter=true)
       // Note: This call is synchronous and will cause the app to quit immediately
       // The app will close, install the update, and then restart automatically
-      autoUpdater.quitAndInstall(false, true); // false = isSilent (show installer UI), true = isForceRunAfter (restart app)
+      try {
+        autoUpdater.quitAndInstall(false, true); // false = isSilent (show installer UI), true = isForceRunAfter (restart app)
+      } catch (error) {
+        console.error('Error calling quitAndInstall:', error);
+        // If quitAndInstall fails, try without force run after
+        try {
+          autoUpdater.quitAndInstall(false, false);
+        } catch (err2) {
+          console.error('Error calling quitAndInstall (fallback):', err2);
+          throw err2;
+        }
+      }
 
       // This return may not execute since quitAndInstall quits the app immediately
       // But we return it anyway for the IPC call
