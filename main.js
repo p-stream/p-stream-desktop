@@ -64,10 +64,6 @@ function createWindow() {
   // Store reference to BrowserView globally
   mainBrowserView = view;
 
-  // Set custom user agent to include P-Stream-Desktop
-  const defaultUserAgent = view.webContents.getUserAgent();
-  view.webContents.setUserAgent(defaultUserAgent + ' P-Stream-Desktop/1.0.0');
-
   mainWindow.setBrowserView(view);
 
   // Set up keyboard shortcuts after view is created
