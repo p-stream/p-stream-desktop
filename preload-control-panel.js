@@ -10,4 +10,5 @@ contextBridge.exposeInMainWorld('controlPanel', {
   openReleasesPage: () => ipcRenderer.invoke('openReleasesPage'),
   restartApp: () => ipcRenderer.invoke('restartApp'),
   resetApp: () => ipcRenderer.invoke('reset-app'),
+  uninstallApp: () => ipcRenderer.invoke('uninstall-app'),
 });

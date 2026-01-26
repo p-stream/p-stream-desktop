@@ -2,6 +2,7 @@ const toggle = document.getElementById('discord-rpc-toggle');
 const versionText = document.getElementById('version-text');
 const checkUpdatesBtn = document.getElementById('check-updates-btn');
 const resetAppBtn = document.getElementById('reset-app-btn');
+const uninstallAppBtn = document.getElementById('uninstall-app-btn');
 const streamUrlInput = document.getElementById('stream-url-input');
 const saveUrlBtn = document.getElementById('save-url-btn');
 
@@ -225,6 +226,62 @@ resetAppBtn.addEventListener('click', async () => {
     alert('Failed to reset app. Please try again.');
   } finally {
     resetAppBtn.disabled = false;
+  }
+});
+
+// Handle uninstall app button
+uninstallAppBtn.addEventListener('click', async () => {
+  // Strong warning with multiple confirmations
+  const firstConfirm = confirm(
+    '⚠️ WARNING: This will permanently delete the P-Stream app and ALL associated data from your computer.\n\n' +
+      'This includes:\n' +
+      '• All app settings\n' +
+      '• All cookies and browsing data\n' +
+      '• All stored preferences\n\n' +
+      'This action CANNOT be undone.\n\n' +
+      'Are you absolutely sure you want to continue?',
+  );
+
+  if (!firstConfirm) {
+    return;
+  }
+
+  // Second confirmation
+  const secondConfirm = confirm(
+    'Final confirmation: Are you sure you want to uninstall P-Stream?\n\n' +
+      'The app will be removed from your computer and all data will be deleted.',
+  );
+
+  if (!secondConfirm) {
+    return;
+  }
+
+  uninstallAppBtn.disabled = true;
+  uninstallAppBtn.textContent = 'Uninstalling...';
+
+  try {
+    const result = await window.controlPanel.uninstallApp();
+
+    if (result.success) {
+      uninstallAppBtn.textContent = 'Uninstalling...';
+      // Show final message
+      alert(result.message || 'The app is being uninstalled. Please follow any additional instructions that appear.');
+      // The app should close/quit after uninstall
+    } else {
+      uninstallAppBtn.textContent = 'Uninstall App';
+      alert(
+        result.error ||
+          'Failed to uninstall the app. You may need to uninstall it manually through your system settings.',
+      );
+      uninstallAppBtn.disabled = false;
+    }
+  } catch (error) {
+    console.error('Failed to uninstall app:', error);
+    uninstallAppBtn.textContent = 'Uninstall App';
+    alert(
+      'An error occurred while trying to uninstall the app. You may need to uninstall it manually through your system settings.',
+    );
+    uninstallAppBtn.disabled = false;
   }
 });
 

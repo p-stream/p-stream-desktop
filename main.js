@@ -795,6 +795,171 @@ app.whenReady().then(async () => {
     }
   });
 
+  // IPC handler for uninstalling the app
+  ipcMain.handle('uninstall-app', async () => {
+    try {
+      const platform = process.platform;
+      const isMac = platform === 'darwin';
+      const isWindows = platform === 'win32';
+      const isLinux = platform === 'linux';
+
+      // First, clear all app data
+      try {
+        // Clear settings store
+        if (store) {
+          store.clear();
+        }
+
+        // Clear cookies and storage from the BrowserView session
+        if (mainBrowserView && mainBrowserView.webContents) {
+          const viewSession = mainBrowserView.webContents.session;
+          await viewSession.clearStorageData({
+            storages: ['cookies', 'localstorage', 'sessionstorage', 'indexdb', 'websql', 'cachestorage', 'filesystem'],
+          });
+        }
+
+        // Clear default session cookies
+        await session.defaultSession.clearStorageData({
+          storages: ['cookies', 'localstorage', 'sessionstorage', 'indexdb', 'websql', 'cachestorage', 'filesystem'],
+        });
+      } catch (error) {
+        console.error('Error clearing app data during uninstall:', error);
+        // Continue with uninstall even if data clearing fails
+      }
+
+      // Platform-specific uninstall handling
+      if (isMac) {
+        // macOS: Try to move the app bundle to trash
+        try {
+          // Get the app path - in production, this should be the .app bundle
+          const appPath = app.getPath('exe');
+          // In a packaged app, appPath points to the executable inside the bundle
+          // We need to get the .app bundle path
+          let appBundlePath = appPath;
+
+          // If we're in a .app bundle, get the bundle path
+          if (appPath.includes('.app/Contents/MacOS/')) {
+            appBundlePath = appPath.substring(0, appPath.indexOf('.app/') + 5);
+          } else if (appPath.endsWith('.app')) {
+            appBundlePath = appPath;
+          } else {
+            // In development or if path detection fails, try to find the app
+            // For now, we'll just show instructions
+            dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow() || null, {
+              type: 'info',
+              title: 'Uninstall Instructions',
+              message: 'To complete the uninstall:',
+              detail:
+                '1. All app data has been cleared.\n' +
+                '2. Please drag P-Stream.app from your Applications folder to the Trash.\n' +
+                '3. Empty the Trash to complete the removal.',
+              buttons: ['OK'],
+            });
+            app.quit();
+            return { success: true, message: 'App data cleared. Please manually remove the app from Applications.' };
+          }
+
+          // Try to move to trash
+          const moved = shell.moveItemToTrash(appBundlePath, false);
+          if (moved) {
+            // Wait a moment then quit
+            setTimeout(() => {
+              app.quit();
+            }, 1000);
+            return {
+              success: true,
+              message: 'App has been moved to Trash. Please empty the Trash to complete the removal.',
+            };
+          } else {
+            // If move to trash fails, show instructions
+            dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow() || null, {
+              type: 'info',
+              title: 'Uninstall Instructions',
+              message: 'To complete the uninstall:',
+              detail:
+                '1. All app data has been cleared.\n' +
+                '2. Please drag P-Stream.app from your Applications folder to the Trash.\n' +
+                '3. Empty the Trash to complete the removal.',
+              buttons: ['OK'],
+            });
+            app.quit();
+            return { success: true, message: 'App data cleared. Please manually remove the app from Applications.' };
+          }
+        } catch (error) {
+          console.error('Error moving app to trash:', error);
+          dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow() || null, {
+            type: 'info',
+            title: 'Uninstall Instructions',
+            message: 'To complete the uninstall:',
+            detail:
+              '1. All app data has been cleared.\n' +
+              '2. Please drag P-Stream.app from your Applications folder to the Trash.\n' +
+              '3. Empty the Trash to complete the removal.',
+            buttons: ['OK'],
+          });
+          app.quit();
+          return { success: true, message: 'App data cleared. Please manually remove the app from Applications.' };
+        }
+      } else if (isWindows) {
+        // Windows: Show instructions to use Add/Remove Programs
+        const dialogResult = dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow() || null, {
+          type: 'info',
+          title: 'Uninstall Instructions',
+          message: 'To complete the uninstall:',
+          detail:
+            '1. All app data has been cleared.\n' +
+            '2. Open Settings > Apps > Apps & features\n' +
+            '3. Find "P-Stream" and click Uninstall\n' +
+            '4. Follow the uninstaller prompts',
+          buttons: ['Open Settings', 'OK'],
+          defaultId: 0,
+        });
+
+        if (dialogResult === 0) {
+          // Open Windows Settings to Apps
+          shell.openExternal('ms-settings:appsfeatures');
+        }
+
+        app.quit();
+        return {
+          success: true,
+          message: 'App data cleared. Please use Windows Settings to complete the uninstall.',
+        };
+      } else if (isLinux) {
+        // Linux: Show instructions (AppImage can be deleted directly)
+        dialog.showMessageBoxSync(BrowserWindow.getFocusedWindow() || null, {
+          type: 'info',
+          title: 'Uninstall Instructions',
+          message: 'To complete the uninstall:',
+          detail:
+            '1. All app data has been cleared.\n' +
+            '2. Delete the P-Stream AppImage file from where you saved it.\n' +
+            '3. Remove any desktop entries or shortcuts you created.',
+          buttons: ['OK'],
+        });
+
+        app.quit();
+        return {
+          success: true,
+          message: 'App data cleared. Please manually delete the AppImage file.',
+        };
+      } else {
+        // Unknown platform
+        app.quit();
+        return {
+          success: true,
+          message: "App data cleared. Please manually remove the app using your system's standard method.",
+        };
+      }
+    } catch (error) {
+      console.error('Failed to uninstall app:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to uninstall the app. You may need to uninstall it manually.',
+      };
+    }
+  });
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
