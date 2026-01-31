@@ -438,6 +438,20 @@ function createWindow() {
     mainWindow.webContents.send('window-fullscreen', mainWindow.isFullScreen());
   });
 
+  // Cmd/Ctrl + , only when this window is focused (avoids overriding other apps, e.g. Mac preferences)
+  const shortcut = process.platform === 'darwin' ? 'Command+,' : 'Control+,';
+  mainWindow.on('focus', () => {
+    globalShortcut.register(shortcut, () => {
+      createControlPanelWindow();
+    });
+  });
+  mainWindow.on('blur', () => {
+    globalShortcut.unregister(shortcut);
+  });
+  mainWindow.on('closed', () => {
+    globalShortcut.unregister(shortcut);
+  });
+
   // Optional: Open DevTools
   // view.webContents.openDevTools();
 }
@@ -966,12 +980,6 @@ app.whenReady().then(async () => {
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-
-  // Register global keyboard shortcut (Cmd/Ctrl + ,)
-  const shortcut = process.platform === 'darwin' ? 'Command+,' : 'Control+,';
-  globalShortcut.register(shortcut, () => {
-    createControlPanelWindow();
   });
 });
 
