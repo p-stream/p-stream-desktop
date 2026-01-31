@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';" />
+    <title>P-Stream Update</title>
+    <link rel="stylesheet" href="updater.css" />
+  </head>
+  <body>
+    <div class="updater-container">
+      <img src="logo.png" alt="P-Stream" class="logo" />
+      <h1 class="title">P-Stream</h1>
+      <p id="status-text" class="status">Checking for updates...</p>
+      <div class="progress-container">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      <p id="progress-text" class="progress-text">0%</p>
+    </div>
+    <script src="updater.js"></script>
+  </body>
+</html>

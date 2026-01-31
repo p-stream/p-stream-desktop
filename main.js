@@ -4,6 +4,7 @@ const { handlers, setupInterceptors } = require('./ipc-handlers');
 const { autoUpdater } = require('electron-updater');
 const SimpleStore = require('./storage');
 const discordRPC = require('./discord-rpc');
+const { checkAndAutoUpdate } = require('./auto-updater');
 
 // Settings store (will be initialized when app is ready)
 let store = null;
@@ -611,6 +612,14 @@ app.whenReady().then(async () => {
   // Set the app name
   app.setName('P-Stream');
 
+  // Check for updates FIRST (before creating window)
+  // If an update is being installed, the app will quit and this won't continue
+  const updateInProgress = await checkAndAutoUpdate();
+  if (updateInProgress) {
+    // Update is being installed, app is quitting
+    return;
+  }
+
   // Initialize settings store (after app is ready so app.getPath works)
   store = new SimpleStore({
     defaults: {
@@ -633,30 +642,6 @@ app.whenReady().then(async () => {
   setupInterceptors(session.defaultSession);
 
   createWindow();
-
-  // Check for updates (only in production)
-  if (!app.isPackaged) {
-    console.log('Running in development mode, skipping update check');
-  } else {
-    // Check for updates after a short delay to let the app fully load
-    // This will also detect if there's a pending update already downloaded
-    setTimeout(() => {
-      isStartupCheck = true;
-      console.log('Checking for updates on startup (will detect pending updates)...');
-      autoUpdater.checkForUpdates().catch((error) => {
-        console.error('Error checking for updates on startup:', error);
-        isStartupCheck = false;
-      });
-      // Reset startup check flag after a reasonable timeout (10 seconds)
-      // If update-downloaded event fires, it will be handled above
-      setTimeout(() => {
-        if (isStartupCheck) {
-          console.log('Startup check completed, no pending update found');
-          isStartupCheck = false;
-        }
-      }, 10000);
-    }, 3000);
-  }
 
   // IPC handler for manual update check
   ipcMain.handle('checkForUpdates', async () => {

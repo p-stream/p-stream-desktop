@@ -9,7 +9,7 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ['main.js', 'ipc-handlers.js', 'storage.js', 'test.js', 'discord-rpc.js'],
+    files: ['main.js', 'ipc-handlers.js', 'storage.js', 'test.js', 'discord-rpc.js', 'auto-updater.js'],
     languageOptions: {
       ecmaVersion: 2021,
       sourceType: 'module',
@@ -28,7 +28,7 @@ export default [
     },
   },
   {
-    files: ['renderer.js', 'preload.js', 'control-panel.js'],
+    files: ['renderer.js', 'preload.js', 'control-panel.js', 'updater.js'],
     languageOptions: {
       ecmaVersion: 2021,
       sourceType: 'module',
