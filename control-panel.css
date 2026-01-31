@@ -183,6 +183,28 @@ body {
   background: #5865f2;
 }
 
+.control-panel__button-group {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.control-panel__button--primary {
+  background: #22c55e;
+}
+
+.control-panel__button--primary:hover {
+  background: #16a34a;
+}
+
+.control-panel__button--primary:active {
+  background: #15803d;
+}
+
+.control-panel__button--primary:disabled:hover {
+  background: #22c55e;
+}
+
 .control-panel__button--danger {
   background: #ef4444;
 }

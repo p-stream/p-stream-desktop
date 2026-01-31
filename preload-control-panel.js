@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('controlPanel', {
   setStreamUrl: (url) => ipcRenderer.invoke('set-stream-url', url),
   getVersion: () => ipcRenderer.invoke('get-app-version'),
   checkForUpdates: () => ipcRenderer.invoke('checkForUpdates'),
+  installUpdate: () => ipcRenderer.invoke('installUpdate'),
   openReleasesPage: () => ipcRenderer.invoke('openReleasesPage'),
   restartApp: () => ipcRenderer.invoke('restartApp'),
   resetApp: () => ipcRenderer.invoke('reset-app'),

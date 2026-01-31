@@ -1,6 +1,7 @@
 const toggle = document.getElementById('discord-rpc-toggle');
 const versionText = document.getElementById('version-text');
 const checkUpdatesBtn = document.getElementById('check-updates-btn');
+const updateNowBtn = document.getElementById('update-now-btn');
 const resetAppBtn = document.getElementById('reset-app-btn');
 const uninstallAppBtn = document.getElementById('uninstall-app-btn');
 const streamUrlInput = document.getElementById('stream-url-input');
@@ -35,16 +36,16 @@ async function loadState() {
     const updateCheck = await window.controlPanel.checkForUpdates();
     if (updateCheck.isDevelopment) {
       checkUpdatesBtn.textContent = 'Open Releases Page';
+      updateNowBtn.hidden = true;
       versionText.textContent = `v${updateCheck.version} (Dev Mode)`;
     } else {
-      // In production, start with "Check for Updates" button
       checkUpdatesBtn.textContent = 'Check for Updates';
+      updateNowBtn.hidden = true;
     }
   } catch (error) {
-    // Ignore errors when checking for dev mode
     console.log('Could not determine if in dev mode:', error);
-    // Default to "Check for Updates" if we can't determine mode
     checkUpdatesBtn.textContent = 'Check for Updates';
+    updateNowBtn.hidden = true;
   }
 }
 
@@ -63,14 +64,15 @@ toggle.addEventListener('change', async (event) => {
 checkUpdatesBtn.addEventListener('click', async () => {
   const buttonText = checkUpdatesBtn.textContent;
 
-  // Handle different button states
   if (buttonText === 'Open Releases Page') {
     await handleOpenReleasesPage();
   } else {
-    // Otherwise, check for updates
     await handleCheckForUpdates();
   }
 });
+
+// Handle Update now button (when update is available)
+updateNowBtn.addEventListener('click', handleUpdateNow);
 
 async function handleCheckForUpdates() {
   checkUpdatesBtn.disabled = true;
@@ -80,8 +82,8 @@ async function handleCheckForUpdates() {
     const result = await window.controlPanel.checkForUpdates();
 
     if (result.error) {
-      // Show error message
       versionText.textContent = result.error;
+      updateNowBtn.hidden = true;
       checkUpdatesBtn.textContent = 'Check for Updates';
       // Reset after a few seconds
       setTimeout(() => {
@@ -92,15 +94,18 @@ async function handleCheckForUpdates() {
     } else if (result.isDevelopment) {
       // Development mode - show releases page button
       versionText.textContent = `v${result.version} (Dev Mode)`;
+      updateNowBtn.hidden = true;
       checkUpdatesBtn.textContent = 'Open Releases Page';
     } else if (result.updateAvailable) {
-      // Update available - show button to open releases page
+      // Update available - show "Update now" (trigger updater) and "Open Releases Page"
       versionText.textContent = `Update available: v${result.version}`;
+      updateNowBtn.hidden = false;
       checkUpdatesBtn.textContent = 'Open Releases Page';
     } else {
       // Already up to date
       const displayVersion = result.version || result.currentVersion || 'Unknown';
       versionText.textContent = `v${displayVersion} (Latest)`;
+      updateNowBtn.hidden = true;
       checkUpdatesBtn.textContent = 'Up to Date';
       setTimeout(() => {
         checkUpdatesBtn.textContent = 'Check for Updates';
@@ -126,7 +131,6 @@ async function handleCheckForUpdates() {
 async function handleOpenReleasesPage() {
   try {
     await window.controlPanel.openReleasesPage();
-    // Button text can stay as "Open Releases Page" since the page is now open
   } catch (error) {
     console.error('Failed to open releases page:', error);
     versionText.textContent = 'Error opening releases page';
@@ -135,6 +139,46 @@ async function handleOpenReleasesPage() {
         versionText.textContent = `v${version}`;
       });
     }, 3000);
+  }
+}
+
+async function handleUpdateNow() {
+  updateNowBtn.disabled = true;
+  checkUpdatesBtn.disabled = true;
+  updateNowBtn.textContent = 'Starting update...';
+
+  try {
+    const result = await window.controlPanel.installUpdate();
+    if (result.updateInstalling) {
+      // App may quit (Windows) or updater window is showing
+      versionText.textContent = 'Update in progress...';
+    } else if (result.error) {
+      versionText.textContent = result.error;
+      updateNowBtn.textContent = 'Update now';
+      updateNowBtn.disabled = false;
+      checkUpdatesBtn.disabled = false;
+      setTimeout(async () => {
+        if (versionText.textContent === result.error) {
+          try {
+            const v = await window.controlPanel.getVersion();
+            versionText.textContent = `v${v}`;
+          } catch {
+            versionText.textContent = 'Unknown';
+          }
+        }
+      }, 5000);
+    } else {
+      // No update or platform shows file (Linux/macOS)
+      updateNowBtn.textContent = 'Update now';
+      updateNowBtn.disabled = false;
+      checkUpdatesBtn.disabled = false;
+    }
+  } catch (error) {
+    console.error('Update now failed:', error);
+    versionText.textContent = 'Update failed';
+    updateNowBtn.textContent = 'Update now';
+    updateNowBtn.disabled = false;
+    checkUpdatesBtn.disabled = false;
   }
 }
 

@@ -539,13 +539,17 @@ autoUpdater.on('update-available', (info) => {
             type: 'info',
             title: 'Update Available',
             message: `A new version (${info.version}) of P-Stream is available!`,
-            detail: 'Would you like to open the releases page to download the update?',
-            buttons: ['Open Releases Page', 'Later'],
+            detail: 'Update now to download and install automatically, or open the releases page in your browser.',
+            buttons: ['Update now', 'Open Releases Page', 'Later'],
             defaultId: 0,
-            cancelId: 1,
+            cancelId: 2,
           })
-          .then((result) => {
+          .then(async (result) => {
             if (result.response === 0) {
+              // Update now - trigger the auto-updater (download + install)
+              const { checkAndAutoUpdate } = require('./auto-updater');
+              await checkAndAutoUpdate();
+            } else if (result.response === 1) {
               // Open Releases Page button
               shell.openExternal('https://github.com/p-stream/p-stream-desktop/releases');
             }
@@ -777,6 +781,21 @@ app.whenReady().then(async () => {
     } catch (error) {
       console.error('Failed to open releases page:', error);
       return { success: false, error: error.message };
+    }
+  });
+
+  // IPC handler to trigger the auto-updater (download + install from GitHub release)
+  ipcMain.handle('installUpdate', async () => {
+    if (!app.isPackaged) {
+      return { updateInstalling: false, error: 'Update is not available in development mode' };
+    }
+    try {
+      const { checkAndAutoUpdate } = require('./auto-updater');
+      const updateInstalling = await checkAndAutoUpdate();
+      return { updateInstalling };
+    } catch (error) {
+      console.error('Install update failed:', error);
+      return { updateInstalling: false, error: error.message };
     }
   });
 
