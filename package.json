@@ -61,7 +61,7 @@
         "dmg",
         "zip"
       ],
-      "verifyUpdateCodeSignature": false
+      "strictVerify": false
     },
     "win": {
       "icon": "P-Stream.png",
