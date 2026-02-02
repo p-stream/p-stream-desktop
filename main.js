@@ -1,6 +1,6 @@
 const { app, BrowserWindow, BrowserView, session, ipcMain, dialog, globalShortcut, shell } = require('electron');
 const path = require('path');
-const { handlers, setupInterceptors } = require('./ipc-handlers');
+const { handlers } = require('./ipc-handlers');
 const { autoUpdater } = require('electron-updater');
 const SimpleStore = require('./storage');
 const discordRPC = require('./discord-rpc');
@@ -722,14 +722,8 @@ app.whenReady().then(async () => {
     });
   });
 
-  // Setup Network Interceptors (and add X-P-Stream-Client header for the configured stream URL only)
-  setupInterceptors(session.defaultSession, {
-    getStreamHostname: () => {
-      const streamUrl = store.get('streamUrl', 'pstream.mov');
-      const full =
-        streamUrl.startsWith('http://') || streamUrl.startsWith('https://') ? streamUrl : `https://${streamUrl}/`;
-      return new URL(full).hostname.replace(/^www\./, '');
-    },
+  ipcMain.handle('openControlPanel', () => {
+    createControlPanelWindow();
   });
 
   createWindow();

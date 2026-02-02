@@ -49,8 +49,14 @@ window.addEventListener('message', async (event) => {
   }
 });
 
-// We don't need to expose anything via contextBridge if the site relies solely on window.postMessage
-// But just in case, we can log that we are ready.
+// Expose flag so the web app knows it's running in the desktop client
+contextBridge.exposeInMainWorld('__PSTREAM_DESKTOP__', true);
+
+// When the web app requests desktop settings (e.g. menu → Desktop), open the control panel
+window.addEventListener('pstream-desktop-settings', () => {
+  ipcRenderer.invoke('openControlPanel');
+});
+
 console.log('P-Stream Desktop Preload Loaded');
 
 let lastThemeColor = null;
