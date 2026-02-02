@@ -56,12 +56,19 @@
     ],
     "mac": {
       "category": "public.app-category.entertainment",
-      "icon": "P-Stream.icon"
+      "icon": "P-Stream.icon",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "verifyUpdateCodeSignature": false
     },
     "win": {
       "icon": "P-Stream.png",
-      "target": "nsis",
-      "verifyUpdateCodeSignature": false,
+      "target": [
+        "nsis",
+        "zip"
+      ],
       "requestedExecutionLevel": "asInvoker",
       "executableName": "P-Stream"
     },
