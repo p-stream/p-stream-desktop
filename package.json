@@ -56,7 +56,7 @@
     ],
     "mac": {
       "category": "public.app-category.entertainment",
-      "icon": "logo.png",
+      "icon": "app.icns",
       "target": [
         "dmg",
         "zip"

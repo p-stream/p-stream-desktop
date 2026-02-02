@@ -207,7 +207,7 @@ function createUpdaterWindow() {
     alwaysOnTop: true,
     skipTaskbar: false,
     backgroundColor: '#1f2025',
-    icon: path.join(__dirname, 'logo.png'),
+    icon: path.join(__dirname, process.platform === 'darwin' ? 'app.icns' : 'logo.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

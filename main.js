@@ -20,13 +20,14 @@ function createWindow() {
   // Allow platform override via environment variable for previewing different platforms
   const platform = process.env.PLATFORM_OVERRIDE || process.platform;
   const isMac = platform === 'darwin';
+  const iconPath = path.join(__dirname, isMac ? 'app.icns' : 'logo.png');
 
   // Configure window based on platform
   const windowOptions = {
     width: 1300,
     height: 800,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, 'logo.png'),
+    icon: iconPath,
     backgroundColor: '#1f2025',
     fullscreenable: true,
     webPreferences: {
@@ -529,13 +530,14 @@ function createControlPanelWindow() {
     return;
   }
 
+  const isMac = (process.env.PLATFORM_OVERRIDE || process.platform) === 'darwin';
   controlPanelWindow = new BrowserWindow({
     width: 500,
     height: 400,
     minWidth: 400,
     minHeight: 300,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, 'logo.png'),
+    icon: path.join(__dirname, isMac ? 'app.icns' : 'logo.png'),
     backgroundColor: '#1f2025',
     webPreferences: {
       nodeIntegration: false,
