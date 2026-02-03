@@ -19,6 +19,79 @@ let settingsWindow = null;
 // BrowserView reference (for reset functionality)
 let mainBrowserView = null;
 
+const PASSKEY_PERMISSIONS = new Set(['publickey-credentials-create', 'publickey-credentials-get']);
+const COMMON_MULTI_TLD = new Set(['co.uk', 'com.au', 'com.br', 'com.mx', 'co.jp', 'co.kr', 'co.in']);
+
+function getOriginFromUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
+function isLocalhostHost(hostname) {
+  if (!hostname) return false;
+  const normalized = hostname.toLowerCase();
+  return (
+    normalized === 'localhost' ||
+    normalized === '127.0.0.1' ||
+    normalized === '::1' ||
+    normalized.endsWith('.localhost')
+  );
+}
+
+function isPotentiallySecureOrigin(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'https:') return true;
+    if (parsed.protocol === 'http:' && isLocalhostHost(parsed.hostname)) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function getRegistrableDomain(hostname) {
+  if (!hostname) return null;
+  const lower = hostname.toLowerCase();
+  if (isLocalhostHost(lower)) return lower;
+  if (lower.includes(':')) return lower; // IPv6
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(lower)) return lower; // IPv4
+  const parts = lower.split('.').filter(Boolean);
+  if (parts.length <= 2) return parts.join('.');
+  const lastTwo = parts.slice(-2).join('.');
+  if (COMMON_MULTI_TLD.has(lastTwo) && parts.length >= 3) {
+    return parts.slice(-3).join('.');
+  }
+  return lastTwo;
+}
+
+function isSameSite(requestingUrl, topLevelUrl) {
+  try {
+    const requestingHost = new URL(requestingUrl).hostname;
+    const topLevelHost = new URL(topLevelUrl).hostname;
+    return getRegistrableDomain(requestingHost) === getRegistrableDomain(topLevelHost);
+  } catch {
+    return false;
+  }
+}
+
+function shouldAllowPasskeyRequest(requestingUrl, topLevelUrl) {
+  const requestingOrigin = getOriginFromUrl(requestingUrl);
+  if (!requestingOrigin) return false;
+
+  if (!isPotentiallySecureOrigin(requestingUrl)) return false;
+
+  const topLevelOrigin = getOriginFromUrl(topLevelUrl);
+  if (!topLevelOrigin) return true;
+
+  if (requestingOrigin === topLevelOrigin) return true;
+
+  return isSameSite(requestingUrl, topLevelUrl);
+}
+
 function createWindow() {
   const TITLE_BAR_HEIGHT = 40;
   // Allow platform override via environment variable for previewing different platforms
@@ -72,6 +145,35 @@ function createWindow() {
 
   // Store reference to BrowserView globally
   mainBrowserView = view;
+
+  // Allow WebAuthn passkey flows for the current origin only
+  const viewSession = view.webContents.session;
+  viewSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    if (!PASSKEY_PERMISSIONS.has(permission)) {
+      callback(false);
+      return;
+    }
+
+    const requestingUrl = details?.requestingUrl || details?.securityOrigin || webContents.getURL();
+    const topLevelUrl = details?.topLevelUrl || webContents.getURL();
+
+    const win = BrowserWindow.fromWebContents(webContents);
+    if (win && !win.isFocused()) {
+      win.focus();
+    }
+    if (!webContents.isFocused()) {
+      webContents.focus();
+    }
+
+    const allowed = shouldAllowPasskeyRequest(requestingUrl, topLevelUrl);
+    callback(allowed);
+  });
+
+  viewSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    if (!PASSKEY_PERMISSIONS.has(permission)) return false;
+    const topLevelUrl = webContents.getURL();
+    return shouldAllowPasskeyRequest(requestingOrigin, topLevelUrl);
+  });
 
   mainWindow.setBrowserView(view);
 
