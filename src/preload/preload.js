@@ -77,6 +77,7 @@ window.addEventListener('pstream-desktop-settings', () => {
 console.log('P-Stream Desktop Preload Loaded');
 
 let lastThemeColor = null;
+let themeSendScheduled = false;
 
 const getThemeColor = () => {
   const body = document.body;
@@ -100,11 +101,20 @@ const sendThemeColor = () => {
   }
 };
 
+const scheduleThemeSend = () => {
+  if (themeSendScheduled) return;
+  themeSendScheduled = true;
+  requestAnimationFrame(() => {
+    themeSendScheduled = false;
+    sendThemeColor();
+  });
+};
+
 const observeThemeChanges = () => {
   sendThemeColor();
 
   const observer = new MutationObserver(() => {
-    sendThemeColor();
+    scheduleThemeSend();
   });
 
   observer.observe(document.documentElement, {
@@ -124,5 +134,12 @@ const observeThemeChanges = () => {
 
 window.addEventListener('DOMContentLoaded', () => {
   observeThemeChanges();
-  setInterval(sendThemeColor, 2000);
+  const intervalId = setInterval(sendThemeColor, 10000);
+  window.addEventListener(
+    'beforeunload',
+    () => {
+      clearInterval(intervalId);
+    },
+    { once: true },
+  );
 });
