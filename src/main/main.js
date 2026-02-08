@@ -376,7 +376,9 @@ function createWindow() {
               color: #71717a;
             }
             .settings-btn {
-              margin-top: 20px;
+              position: absolute;
+              bottom: 20px;
+              left: 1/2;
               padding: 10px 20px;
               background: #5865f2;
               color: #ffffff;
@@ -461,6 +463,7 @@ function createWindow() {
           </style>
         </head>
         <body>
+          <button class="settings-btn secondary" onclick="if(window.__PSTREAM_OPEN_SETTINGS__)window.__PSTREAM_OPEN_SETTINGS__()">Open Settings</button>
           <div class="error-box">
             <h1>Failed to connect</h1>
             <p>Could not load the page.</p>
@@ -473,9 +476,7 @@ function createWindow() {
                 <div id="warp-toggle" class="toggle" role="button" tabindex="0" aria-label="Toggle WARP"><span class="toggle-knob"></span></div>
               </div>
               <p id="warp-status" class="warp-status" style="color:#71717a;"></p>
-              <button class="settings-btn secondary" onclick="if(window.__PSTREAM_OPEN_SETTINGS__)window.__PSTREAM_OPEN_SETTINGS__()">Open Settings</button>
             </div>
-            <p class="hint" style="margin-top: 16px;">You can reload with Ctrl+R (or Cmd+R on Mac).</p>
           </div>
           <script>
             (function() {
@@ -496,8 +497,6 @@ function createWindow() {
                   setToggle(!!status.enabled, false);
                   if (status.enabled && status.proxyHost)
                     setStatus('Connected via ' + status.proxyHost + ':' + (status.proxyPort || ''), '#4ade80');
-                  else
-                    setStatus('Disabled', '#71717a');
                 } catch (e) {
                   setStatus('', '#71717a');
                 }
