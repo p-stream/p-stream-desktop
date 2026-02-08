@@ -217,7 +217,7 @@ async function setActivity(title, mediaMetadata = null) {
       activity.endTimestamp = endTimestamp;
     }
     activity.state = 'Watching';
-  } else if (mediaMetadata.isPlaying === false && mediaMetadata.currentTime != null) {
+  } else if (mediaMetadata.isPlaying === false && !isNaN(mediaMetadata.duration)) {
     activity.startTimestamp = new Date();
     activity.endTimestamp = undefined;
     activity.state = 'Paused';
@@ -271,7 +271,8 @@ function initialize(settingsStore) {
       const hasMetadata = data?.metadata && (data.metadata.title || data.metadata.artist);
       const hasProgress = data?.progress && (data.progress.currentTime != null || data.progress.duration != null);
 
-      if (!hasMetadata && !hasProgress) {
+      // If we don't have at least some metadata or progress info, clear the activity to avoid showing stale/incorrect info
+      if (!hasMetadata || !hasProgress) {
         currentMediaMetadata = null;
         setActivity(currentActivityTitle, null);
         return { success: true };
@@ -311,11 +312,7 @@ function initialize(settingsStore) {
         });
       }
 
-      // If we have at least title and duration, update the activity; otherwise clear metadata
-      // Sometimes we get incomplete updates (e.g., only title but no duration)
-      // Since we use progress bar for both movies and episodes, duration is required to show activity for either type, so if it's missing we should clear the activity to avoid showing incorrect info
-      // For that reason, we require both title and duration to show activity
-      if (currentMediaMetadata.title && currentMediaMetadata.duration != null) {
+      if (currentMediaMetadata) {
         await setActivity(currentActivityTitle, currentMediaMetadata);
       } else {
         currentMediaMetadata = null;
