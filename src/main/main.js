@@ -819,8 +819,8 @@ function openSettingsWindow(parentWindow = null) {
   const iconPath = path.join(ROOT, isMac ? 'app.icns' : 'logo.png');
 
   settingsWindow = new BrowserWindow({
-    width: 500,
-    height: 560,
+    width: 600,
+    height: 760,
     minWidth: 400,
     minHeight: 400,
     parent: parentWindow || undefined,
@@ -985,6 +985,34 @@ autoUpdater.on('update-downloaded', (info) => {
   // Users will download manually from GitHub releases
 });
 
+// IPC handler for getting hardware acceleration state
+ipcMain.handle('get-hardware-acceleration', () => {
+  if (!store) return true; // Default to true if store not available
+  return store.get('hardwareAcceleration', true);
+});
+
+// IPC handler for setting hardware acceleration
+ipcMain.handle('set-hardware-acceleration', async (event, enabled) => {
+  try {
+    if (!store) return { success: false, error: 'Settings store not available' };
+
+    // Save the setting
+    store.set('hardwareAcceleration', enabled);
+
+    // Apply the command line switch - this only takes effect on restart
+    if (!enabled) {
+      app.commandLine.appendSwitch('disable-gpu');
+    } else {
+      app.commandLine.removeSwitch('disable-gpu');
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to set hardware acceleration:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 app.whenReady().then(async () => {
   // Set the app name
   app.setName('P-Stream');
@@ -1002,6 +1030,7 @@ app.whenReady().then(async () => {
     defaults: {
       discordRPCEnabled: true,
       streamUrl: 'pstream.mov',
+      hardwareAcceleration: true,
       warpLaunchEnabled: false,
     },
   });

@@ -20,4 +20,8 @@ contextBridge.exposeInMainWorld('settings', {
   setStreamUrl: (url) => ipcRenderer.invoke('set-stream-url', url),
   resetApp: () => ipcRenderer.invoke('reset-app'),
   uninstallApp: () => ipcRenderer.invoke('uninstall-app'),
+  // Hardware acceleration
+  getHardwareAcceleration: () => ipcRenderer.invoke('get-hardware-acceleration'),
+  setHardwareAcceleration: (enabled) => ipcRenderer.invoke('set-hardware-acceleration', enabled),
+  restartApp: () => ipcRenderer.invoke('restartApp'),
 });

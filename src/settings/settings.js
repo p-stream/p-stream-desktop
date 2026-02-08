@@ -9,6 +9,8 @@ const streamUrlInput = document.getElementById('stream-url-input');
 const saveUrlBtn = document.getElementById('save-url-btn');
 const resetAppBtn = document.getElementById('reset-app-btn');
 const uninstallAppBtn = document.getElementById('uninstall-app-btn');
+const hardwareAccelToggle = document.getElementById('hardware-accel-toggle');
+
 // Load initial state
 async function loadState() {
   // Load WARP on launch state
@@ -51,6 +53,14 @@ async function loadState() {
     streamUrlInput.value = url;
   } catch (error) {
     console.error('Failed to load stream URL:', error);
+  }
+
+  // Load hardware acceleration state
+  try {
+    const hwAccel = await window.settings.getHardwareAcceleration();
+    hardwareAccelToggle.checked = hwAccel;
+  } catch (error) {
+    console.error('Failed to load hardware acceleration state:', error);
   }
 
   // Check if we're in development mode
@@ -135,6 +145,36 @@ discordToggle.addEventListener('change', async (event) => {
   } catch (error) {
     console.error('Failed to update Discord RPC state:', error);
     discordToggle.checked = !event.target.checked;
+  }
+});
+
+// Handle hardware acceleration toggle change
+hardwareAccelToggle.addEventListener('change', async (event) => {
+  const enabling = event.target.checked;
+  hardwareAccelToggle.disabled = true;
+
+  try {
+    const result = await window.settings.setHardwareAcceleration(enabling);
+    if (result.success) {
+      hardwareAccelToggle.checked = enabling;
+
+      // Show restart prompt
+      const restart = confirm(
+        'Hardware acceleration setting requires a restart to take effect.\n\nDo you want to restart the app now?',
+      );
+
+      if (restart) {
+        await window.settings.restartApp();
+      }
+    } else {
+      hardwareAccelToggle.checked = !enabling;
+      alert('Failed to update hardware acceleration setting');
+    }
+  } catch (error) {
+    console.error('Failed to update hardware acceleration state:', error);
+    hardwareAccelToggle.checked = !enabling;
+  } finally {
+    hardwareAccelToggle.disabled = false;
   }
 });
 
