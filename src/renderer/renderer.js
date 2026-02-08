@@ -70,6 +70,7 @@ window.windowControls.onPlatformChanged((platform) => {
   } else {
     // Windows: Keep default Windows-style icons
     if (titlebar) titlebar.classList.add('titlebar--windows');
+    if (appIcon) appIcon.style.display = 'block';
   }
 
   // After platform is set, wait for page to load then restore theme color

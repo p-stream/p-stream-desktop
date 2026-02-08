@@ -42,16 +42,16 @@ body {
 .titlebar__left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 }
 
 .app-icon {
   width: 18px;
   height: 18px;
-  background: url('../../logo.png') center/contain no-repeat;
-  border-radius: 4px;
-  opacity: 0.9;
+  display: none;
+  opacity: 1;
+  color: #8183f9;
 }
 
 .window-title {
