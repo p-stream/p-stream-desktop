@@ -49,7 +49,7 @@ body {
 .app-icon {
   width: 18px;
   height: 18px;
-  background: url('logo.png') center/contain no-repeat;
+  background: url('../../logo.png') center/contain no-repeat;
   border-radius: 4px;
   opacity: 0.9;
 }
