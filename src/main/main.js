@@ -770,8 +770,8 @@ function createWindow() {
       discordRPC.setCurrentMediaMetadata(null);
       discordRPC.setActivity(null);
     } else {
-      const cleanTitle = title.replace(' - P-Stream', '');
-      mainWindow.setTitle(`${cleanTitle} - P-Stream`);
+      const cleanTitle = title.replace(' • P-Stream', '');
+      mainWindow.setTitle(`${cleanTitle} • P-Stream`);
       discordRPC.setCurrentActivityTitle(cleanTitle);
       // Only use title if we don't have media metadata
       if (!discordRPC.getCurrentMediaMetadata()) {

@@ -42,7 +42,7 @@ body {
 .titlebar__left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 }
 
