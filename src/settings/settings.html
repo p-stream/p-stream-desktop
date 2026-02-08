@@ -65,29 +65,6 @@
           </div>
         </div>
         <div class="settings__section">
-          <div class="settings__setting settings__setting--input">
-            <div class="settings__setting-info">
-              <h3 class="settings__setting-title">Page URL</h3>
-              <p class="settings__setting-description">
-                Change the default page URL (some regions may block the default domain)
-              </p>
-            </div>
-            <div class="settings__input-group">
-              <input type="text" id="stream-url-input" class="settings__input" placeholder="pstream.mov" />
-              <button id="save-url-btn" class="settings__button">Save</button>
-            </div>
-          </div>
-        </div>
-        <div class="settings__section">
-          <div class="settings__setting">
-            <div class="settings__setting-info">
-              <h3 class="settings__setting-title">Reset App</h3>
-              <p class="settings__setting-description">Clear all local data and cookies</p>
-            </div>
-            <button id="reset-app-btn" class="settings__button settings__button--danger">Reset App</button>
-          </div>
-        </div>
-        <div class="settings__section">
           <div class="settings__setting">
             <div class="settings__setting-info">
               <h3 class="settings__setting-title">Uninstall App</h3>
@@ -95,6 +72,36 @@
             </div>
             <button id="uninstall-app-btn" class="settings__button settings__button--danger">Uninstall App</button>
           </div>
+        </div>
+        <div class="settings__section">
+          <details class="settings__advanced">
+            <summary class="settings__advanced-toggle">Advanced</summary>
+            <div class="settings__advanced-content">
+              <div class="settings__section">
+                <div class="settings__setting settings__setting--input">
+                  <div class="settings__setting-info">
+                    <h3 class="settings__setting-title">Page URL</h3>
+                    <p class="settings__setting-description">
+                      Change the default page URL (some regions may block the default domain)
+                    </p>
+                  </div>
+                  <div class="settings__input-group">
+                    <input type="text" id="stream-url-input" class="settings__input" placeholder="pstream.mov" />
+                    <button id="save-url-btn" class="settings__button">Save</button>
+                  </div>
+                </div>
+              </div>
+              <div class="settings__section">
+                <div class="settings__setting">
+                  <div class="settings__setting-info">
+                    <h3 class="settings__setting-title">Reset App</h3>
+                    <p class="settings__setting-description">Clear all local data and cookies</p>
+                  </div>
+                  <button id="reset-app-btn" class="settings__button settings__button--danger">Reset App</button>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     </div>

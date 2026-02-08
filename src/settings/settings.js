@@ -9,7 +9,6 @@ const streamUrlInput = document.getElementById('stream-url-input');
 const saveUrlBtn = document.getElementById('save-url-btn');
 const resetAppBtn = document.getElementById('reset-app-btn');
 const uninstallAppBtn = document.getElementById('uninstall-app-btn');
-
 // Load initial state
 async function loadState() {
   // Load WARP on launch state
