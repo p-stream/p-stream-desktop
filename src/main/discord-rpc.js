@@ -217,7 +217,7 @@ async function setActivity(title, mediaMetadata = null) {
       activity.endTimestamp = endTimestamp;
     }
     activity.state = 'Watching';
-  } else if (mediaMetadata.isPlaying === false && !isNaN(mediaMetadata.duration)) {
+  } else if (mediaMetadata.isPlaying === false) {
     activity.startTimestamp = new Date();
     activity.endTimestamp = undefined;
     activity.state = 'Paused';
