@@ -64,11 +64,17 @@ body {
   max-width: 520px;
 }
 
+/* Hidden by default until platform is known (avoids flash of Windows controls on Mac/Linux) */
 .titlebar__right {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 2px;
   -webkit-app-region: no-drag;
+}
+
+body[data-platform='win32'] .titlebar__right,
+body[data-platform='linux'] .titlebar__right {
+  display: flex;
 }
 
 .window-btn {
