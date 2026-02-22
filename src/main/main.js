@@ -1,11 +1,29 @@
-const { app, BrowserWindow, BrowserView, session, ipcMain, dialog, globalShortcut, shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  BrowserView,
+  session,
+  ipcMain,
+  dialog,
+  globalShortcut,
+  shell,
+  protocol,
+  net,
+} = require('electron');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const { handlers, setupInterceptors } = require('./ipc-handlers');
 const { autoUpdater } = require('electron-updater');
 const SimpleStore = require('./storage');
 const discordRPC = require('./discord-rpc');
 const { checkAndAutoUpdate } = require('./auto-updater');
 const warpProxy = require('./warp-proxy');
+const downloadManager = require('./download-manager');
+
+// Register custom protocol scheme before app is ready (required for streaming/range requests)
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'pstream', privileges: { stream: true, supportFetchAPI: true } },
+]);
 
 // Paths relative to src/main/ (__dirname)
 const ROOT = path.join(__dirname, '..', '..');
@@ -464,6 +482,7 @@ function createWindow() {
         </head>
         <body>
           <button class="settings-btn secondary" onclick="if(window.__PSTREAM_OPEN_SETTINGS__)window.__PSTREAM_OPEN_SETTINGS__()">Open Settings</button>
+          <button class="settings-btn" style="bottom: 70px" onclick="if(window.__PSTREAM_OPEN_OFFLINE__)window.__PSTREAM_OPEN_OFFLINE__()">View Offline Downloads</button>
           <div class="error-box">
             <h1>Failed to connect</h1>
             <p>Could not load the page.</p>
@@ -1084,6 +1103,63 @@ app.whenReady().then(async () => {
     ipcMain.handle(channel, async (event, ...args) => {
       return handler(...args);
     });
+  });
+
+  // Only allow download IPC from the BrowserView's own webContents
+  function isAllowedDownloadSender(event) {
+    return mainBrowserView && event.sender === mainBrowserView.webContents;
+  }
+
+  // Download Manager IPCs
+  ipcMain.handle('startDownload', (event, videoData) => {
+    if (!isAllowedDownloadSender(event)) return;
+    // Send progress to the BrowserView's webContents (where offline.html runs)
+    const wc = mainBrowserView.webContents;
+    return downloadManager.startDownload(videoData, wc);
+  });
+
+  ipcMain.handle('getDownloads', (event) => {
+    if (!isAllowedDownloadSender(event)) return [];
+    return downloadManager.getDownloads();
+  });
+
+  ipcMain.handle('deleteDownload', (event, id) => {
+    if (!isAllowedDownloadSender(event)) return false;
+    return downloadManager.deleteDownload(id);
+  });
+
+  ipcMain.handle('openOfflineApp', () => {
+    if (mainBrowserView) {
+      mainBrowserView.webContents.loadFile(path.join(RENDERER, 'offline.html'));
+    }
+  });
+
+  // Register custom protocol to serve local downloaded files (subtitle tracks etc.)
+  protocol.handle('pstream', (request) => {
+    let parsed;
+    try {
+      parsed = new URL(request.url);
+    } catch {
+      return new Response('Not found', { status: 404 });
+    }
+
+    // Extract only the basename to prevent path traversal via encoded separators
+    const rawFilename = decodeURIComponent(parsed.pathname.replace(/^\/+/, ''));
+    const filename = path.basename(rawFilename);
+
+    if (!filename || filename === '.' || filename === '..') {
+      return new Response('Not found', { status: 404 });
+    }
+
+    const resolvedPath = path.resolve(downloadManager.downloadsDir, filename);
+    const expectedDir = path.resolve(downloadManager.downloadsDir) + path.sep;
+
+    if (!resolvedPath.startsWith(expectedDir)) {
+      console.error(`[Security] Blocked access to ${resolvedPath}`);
+      return new Response('Not found', { status: 404 });
+    }
+
+    return net.fetch(pathToFileURL(resolvedPath).href);
   });
 
   ipcMain.handle('openControlPanel', () => {
