@@ -43,14 +43,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.location.href = url.href;
   });
 
-  // Use file:// URL directly — works because player.html is also loaded via file://
-  const filePath = video.filePath.replace(/\\/g, '/');
-  player.src = 'file://' + encodeURI(filePath).replace(/#/g, '%23');
+  // Use the custom 'pstream://' protocol for secure local file access
+  const videoFilename = video.filePath.split(/\/|\\/).pop();
+  player.src = `pstream://${encodeURIComponent(videoFilename)}`;
 
   if (video.subtitlePath) {
     // Read the SRT file and convert to WebVTT (the only format <track> supports)
     try {
-      const subUrl = 'file://' + encodeURI(video.subtitlePath.replace(/\\/g, '/')).replace(/#/g, '%23');
+      const subFilename = video.subtitlePath.split(/\/|\\/).pop();
+      const subUrl = `pstream://${encodeURIComponent(subFilename)}`;
       const res = await fetch(subUrl);
       const srtText = await res.text();
 
