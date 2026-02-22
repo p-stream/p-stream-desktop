@@ -1105,18 +1105,26 @@ app.whenReady().then(async () => {
     });
   });
 
+  // Only allow download IPC from the BrowserView's own webContents
+  function isAllowedDownloadSender(event) {
+    return mainBrowserView && event.sender === mainBrowserView.webContents;
+  }
+
   // Download Manager IPCs
   ipcMain.handle('startDownload', (event, videoData) => {
+    if (!isAllowedDownloadSender(event)) return;
     // Send progress to the BrowserView's webContents (where offline.html runs)
-    const wc = mainBrowserView ? mainBrowserView.webContents : event.sender;
+    const wc = mainBrowserView.webContents;
     return downloadManager.startDownload(videoData, wc);
   });
 
-  ipcMain.handle('getDownloads', () => {
+  ipcMain.handle('getDownloads', (event) => {
+    if (!isAllowedDownloadSender(event)) return [];
     return downloadManager.getDownloads();
   });
 
   ipcMain.handle('deleteDownload', (event, id) => {
+    if (!isAllowedDownloadSender(event)) return false;
     return downloadManager.deleteDownload(id);
   });
 
@@ -1128,13 +1136,25 @@ app.whenReady().then(async () => {
 
   // Register custom protocol to serve local downloaded files (subtitle tracks etc.)
   protocol.handle('pstream', (request) => {
-    const url = new URL(request.url);
-    // Sanitize to prevent path traversal. Only allow access to files directly inside the downloadsDir.
-    const filename = path.basename(decodeURIComponent(url.pathname));
-    const resolvedPath = path.join(downloadManager.downloadsDir, filename);
+    let parsed;
+    try {
+      parsed = new URL(request.url);
+    } catch {
+      return new Response('Not found', { status: 404 });
+    }
 
-    // A second layer of defense: ensure the resolved path is still within the downloads directory.
-    if (!resolvedPath.startsWith(downloadManager.downloadsDir)) {
+    // Extract only the basename to prevent path traversal via encoded separators
+    const rawFilename = decodeURIComponent(parsed.pathname.replace(/^\/+/, ''));
+    const filename = path.basename(rawFilename);
+
+    if (!filename || filename === '.' || filename === '..') {
+      return new Response('Not found', { status: 404 });
+    }
+
+    const resolvedPath = path.resolve(downloadManager.downloadsDir, filename);
+    const expectedDir = path.resolve(downloadManager.downloadsDir) + path.sep;
+
+    if (!resolvedPath.startsWith(expectedDir)) {
       console.error(`[Security] Blocked access to ${resolvedPath}`);
       return new Response('Not found', { status: 404 });
     }

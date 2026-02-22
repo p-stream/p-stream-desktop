@@ -61,13 +61,25 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     grid.innerHTML = '';
 
+    const defaultPoster =
+      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23141414" width="100" height="100"/><text x="50" y="50" fill="%23868686" font-family="sans-serif" font-size="12" text-anchor="middle" alignment-baseline="middle">No Poster</text></svg>';
+
+    function sanitizePosterUrl(poster) {
+      if (!poster || typeof poster !== 'string') return defaultPoster;
+      if (poster.startsWith('data:image/')) return poster;
+      try {
+        const url = new URL(poster);
+        if (url.protocol === 'https:' || url.protocol === 'http:') return url.href;
+      } catch { /* invalid URL */ }
+      return defaultPoster;
+    }
+
     downloads.forEach((d) => {
       const card = document.createElement('div');
       card.className = 'card';
 
-      const posterSrc =
-        d.poster ||
-        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23141414" width="100" height="100"/><text x="50" y="50" fill="%23868686" font-family="sans-serif" font-size="12" text-anchor="middle" alignment-baseline="middle">No Poster</text></svg>';
+      const posterSrc = sanitizePosterUrl(d.poster);
+      const safeTitle = typeof d.title === 'string' ? d.title : 'Unknown Title';
 
       let statusHTML = '';
       if (d.status === 'downloading') {
@@ -86,7 +98,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       card.innerHTML = `
         <div class="poster-container">
-          <img class="poster" src="${posterSrc}" alt="${d.title}" />
+          <img class="poster" />
           <div class="poster-overlay"></div>
           ${d.status === 'completed' ? `
           <div class="play-overlay">
@@ -94,12 +106,12 @@ window.addEventListener('DOMContentLoaded', async () => {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
             </div>
           </div>` : ''}
-          <button class="delete-btn" data-id="${d.id}" title="Delete Download">
+          <button class="delete-btn" title="Delete Download">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
           </button>
         </div>
         <div class="info">
-          <div class="title" title="${d.title}">${d.title}</div>
+          <div class="title"></div>
           <div class="status" id="status-${d.id}">
             ${statusHTML}
           </div>
@@ -108,6 +120,15 @@ window.addEventListener('DOMContentLoaded', async () => {
             : ''}
         </div>
       `;
+
+      // Set user-supplied data via safe DOM properties (not innerHTML)
+      const img = card.querySelector('.poster');
+      img.src = posterSrc;
+      img.alt = safeTitle;
+      const titleEl = card.querySelector('.title');
+      titleEl.textContent = safeTitle;
+      titleEl.title = safeTitle;
+      card.querySelector('.delete-btn').dataset.id = d.id;
 
       card.addEventListener('click', (e) => {
         if (e.target.closest('.delete-btn')) return;
