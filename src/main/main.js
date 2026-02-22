@@ -1128,11 +1128,14 @@ app.whenReady().then(async () => {
 
   // Register custom protocol to serve local downloaded files (subtitle tracks etc.)
   protocol.handle('pstream', (request) => {
-    const stripped = request.url.replace('pstream://', '');
-    const filename = decodeURIComponent(stripped.split('/')[0].split('?')[0]);
-    const resolvedPath = path.normalize(path.join(downloadManager.downloadsDir, filename));
+    const url = new URL(request.url);
+    // Sanitize to prevent path traversal. Only allow access to files directly inside the downloadsDir.
+    const filename = path.basename(decodeURIComponent(url.pathname));
+    const resolvedPath = path.join(downloadManager.downloadsDir, filename);
 
+    // A second layer of defense: ensure the resolved path is still within the downloads directory.
     if (!resolvedPath.startsWith(downloadManager.downloadsDir)) {
+      console.error(`[Security] Blocked access to ${resolvedPath}`);
       return new Response('Not found', { status: 404 });
     }
 
