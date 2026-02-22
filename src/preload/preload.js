@@ -1,6 +1,16 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-const VALID_CHANNELS = ['hello', 'makeRequest', 'prepareStream', 'openPage', 'updateMediaMetadata'];
+const VALID_CHANNELS = [
+  'hello',
+  'makeRequest',
+  'prepareStream',
+  'openPage',
+  'updateMediaMetadata',
+  'startDownload',
+  'getDownloads',
+  'deleteDownload',
+  'openOfflineApp',
+];
 
 window.addEventListener('message', async (event) => {
   // Security check: only accept messages from the same window
@@ -62,6 +72,11 @@ contextBridge.exposeInMainWorld('__PSTREAM_OPEN_DEVTOOLS__', () => {
   ipcRenderer.send('open-embed-devtools');
 });
 
+// Expose function to trigger offline mode view
+contextBridge.exposeInMainWorld('__PSTREAM_OPEN_OFFLINE__', () => {
+  ipcRenderer.invoke('openOfflineApp');
+});
+
 // Expose WARP controls for the "failed to load" error page (turn on WARP, then reload)
 contextBridge.exposeInMainWorld('__PSTREAM_SET_WARP_ENABLED__', (enabled) =>
   ipcRenderer.invoke('set-warp-enabled', enabled),
@@ -73,6 +88,15 @@ contextBridge.exposeInMainWorld('__PSTREAM_RELOAD_STREAM_PAGE__', () => ipcRende
 window.addEventListener('pstream-desktop-settings', () => {
   ipcRenderer.send('open-settings');
 });
+
+// Forward download events from main process to web app
+ipcRenderer.on('download-progress', (_event, data) =>
+  window.postMessage({ name: 'download-progress', body: data }, '*'),
+);
+ipcRenderer.on('download-complete', (_event, data) =>
+  window.postMessage({ name: 'download-complete', body: data }, '*'),
+);
+ipcRenderer.on('download-error', (_event, data) => window.postMessage({ name: 'download-error', body: data }, '*'));
 
 console.log('P-Stream Desktop Preload Loaded');
 

@@ -1,4 +1,5 @@
 onlyBuiltDependencies:
+  - '@ffmpeg-installer/darwin-x64'
   - electron
   - electron-winstaller
   - register-scheme
