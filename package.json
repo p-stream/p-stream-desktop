@@ -1,7 +1,7 @@
 {
   "name": "p-stream-desktop",
   "productName": "P-Stream",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Desktop app for P-Stream",
   "author": "P-Stream",
   "main": "src/main/main.js",
