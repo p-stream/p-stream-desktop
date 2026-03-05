@@ -6,8 +6,6 @@ const SimpleStore = require('./storage');
 const discordRPC = require('./discord-rpc');
 const { checkAndAutoUpdate } = require('./auto-updater');
 const warpProxy = require('./warp-proxy');
-// Register custom protocol scheme before app is ready (required for streaming/range requests)
-protocol.registerSchemesAsPrivileged([{ scheme: 'pstream', privileges: { stream: true, supportFetchAPI: true } }]);
 
 // Paths relative to src/main/ (__dirname)
 const ROOT = path.join(__dirname, '..', '..');
@@ -807,7 +805,7 @@ function createWindow() {
         // --- JS: move custom subtitle overlays inside the fullscreen element ---
         // Build a candidate set at injection time using a MutationObserver so that
         // fullscreen transitions only iterate the (small) set of known overlay elements
-        // rather than running 13 querySelectorAll scans (including expensive [class*=…]
+        // rather than running 13 querySelectorAll scans (including expensive [class*=…])
         // substring scans) across an unpredictably large DOM on every fullscreen enter.
         const COMBINED_SELECTOR = [
           '.vjs-text-track-display',       // Video.js
@@ -1225,86 +1223,6 @@ app.whenReady().then(async () => {
     });
   });
 
-<<<<<<< HEAD
-  // Only allow download IPC from the BrowserView's own webContents
-  function isAllowedDownloadSender(event) {
-    return mainBrowserView && event.sender === mainBrowserView.webContents;
-  }
-
-  // Download Manager IPCs
-  ipcMain.handle('startDownload', (event, videoData) => {
-    if (!isAllowedDownloadSender(event)) return;
-    // Send progress to the BrowserView's webContents (where offline.html runs)
-    const wc = mainBrowserView.webContents;
-    return downloadManager.startDownload(videoData, wc);
-  });
-
-  ipcMain.handle('getDownloads', (event) => {
-    if (!isAllowedDownloadSender(event)) return [];
-    return downloadManager.getDownloads();
-  });
-
-  ipcMain.handle('deleteDownload', (event, id) => {
-    if (!isAllowedDownloadSender(event)) return false;
-    return downloadManager.deleteDownload(id);
-  });
-
-  ipcMain.handle('openOfflineApp', () => {
-    if (mainBrowserView) {
-      mainBrowserView.webContents.loadFile(path.join(RENDERER, 'offline.html'));
-    }
-  });
-
-  // Register custom protocol to serve local downloaded files (subtitle tracks etc.)
-  protocol.handle('pstream', (request) => {
-    let parsed;
-    try {
-      parsed = new URL(request.url);
-    } catch {
-      return new Response('Not found', { status: 404 });
-    }
-
-    // Extract only the basename to prevent path traversal via encoded separators
-    const rawFilename = decodeURIComponent(parsed.pathname.replace(/^\/+/, ''));
-    const filename = path.basename(rawFilename);
-
-    if (!filename || filename === '.' || filename === '..') {
-      return new Response('Not found', { status: 404 });
-    }
-
-    const resolvedPath = path.resolve(downloadManager.downloadsDir, filename);
-    const expectedDir = path.resolve(downloadManager.downloadsDir) + path.sep;
-
-    if (!resolvedPath.startsWith(expectedDir)) {
-      console.error(`[Security] Blocked access to ${resolvedPath}`);
-      return new Response('Not found', { status: 404 });
-    }
-
-    return net.fetch(pathToFileURL(resolvedPath).href);
-  });
-
-  ipcMain.handle('save-domain', async (event, domain) => {
-    if (!store) return false;
-
-    // Basic validation
-    if (!domain || domain.trim().length === 0) {
-      throw new Error('Domain cannot be empty');
-    }
-
-    store.set('streamUrl', domain.trim());
-
-    // Load the new URL in the main view
-    const fullUrl =
-      domain.trim().startsWith('http://') || domain.trim().startsWith('https://')
-        ? domain.trim()
-        : `https://${domain.trim()}/`;
-    mainBrowserView.webContents.loadURL(fullUrl);
-
-    return true;
-  });
-
-=======
->>>>>>> parent of 5c802b9 (add downloading functionality (#33))
   ipcMain.handle('openControlPanel', () => {
     openSettingsWindow();
   });
